@@ -1,4 +1,8 @@
+import base.Ppf;
+
 import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -70,8 +74,8 @@ public class PpfTest {
 
     public void twoMonthsPending(){
 
-        int index = 0;
-
+        ArrayList<Ppf> ppfList = new ArrayList<>();
+        ArrayList<Integer> displayList = new ArrayList<>();
 
         if(conn == null){
             System.out.println("Error: Database not connected");
@@ -80,17 +84,58 @@ public class PpfTest {
         try{
             Statement statement = conn.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT s_num, name, next_repayment FROM ppf WHERE 1");
-
+            while(resultSet.next()){
+                Ppf temp = new Ppf(resultSet.getInt(1), resultSet.getDate(3).toLocalDate());
+                ppfList.add(temp);
+            }
         }
         catch(SQLException e){
             e.printStackTrace();
         }
+
+        LocalDate now = LocalDate.now();
+        now = now.plusMonths(2);
+        for(int i=0; i<ppfList.size(); i++){
+            LocalDate ld = ppfList.get(i).getNext_repayment();
+            if(ld.isBefore(now)){
+                displayList.add(ppfList.get(i).getS_num());
+            }
+        }
+
+        if(displayList.size()==0){
+            System.out.println("No PPF Repayments in the coming 2 months");
+        }
+        else{
+            System.out.println("Here are the PPF Portfolios pending for repayment in the next 2 months");
+            String raw_statement = "SELECT * FROM ppf WHERE s_num=";
+            for(int i=0; i<displayList.size(); i++){
+             try{
+                 Statement st = conn.createStatement();
+                 ResultSet rs = st.executeQuery(raw_statement + displayList.get(i).toString());
+                 while(rs.next()){
+                 System.out.format ("%5d%15d%40s%20s%20s",rs.getInt(1),rs.getInt(2),rs.getString(3),rs.getDate(4).toString(),rs.getDate(5).toString());
+                 System.out.println("");
+                 }
+             }
+             catch(SQLException e){
+                 e.printStackTrace();
+             }
+            }
+        }
+
+        //Display ppfList
+        /*
+        for(int i=0; i<ppfList.size(); i++){
+            System.out.println(ppfList.get(i).getS_num() + "\t" + ppfList.get(i).getNext_repayment());
+        }
+        */
     }
 
     public static void main(String[] args){
         PpfTest ppfTest = new PpfTest();
         ppfTest.establishConnection();
-        ppfTest.displayContents();
+        ppfTest.twoMonthsPending();
+        //ppfTest.displayContents();
         ppfTest.endConnection();
     }
 }

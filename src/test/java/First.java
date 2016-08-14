@@ -4,6 +4,9 @@
 public class First {
 
     public static void main(String[] args){
-        System.out.println("Git check");
+        String h = "Hello";
+        String w = "World";
+        System.out.println(h+w);
+
     }
 }
